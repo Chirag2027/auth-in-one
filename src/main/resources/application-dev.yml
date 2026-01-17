@@ -1,0 +1,4 @@
+## Dev. COnfig file
+
+server:
+  port: 7766
