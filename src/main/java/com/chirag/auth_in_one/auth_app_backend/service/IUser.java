@@ -6,6 +6,8 @@ public interface IUser {
 
     UserDto createUser(UserDto userDto);
 
+    UserDto getUserByEmail(String email);
+
     UserDto updateUser(UserDto userDto);
 
     UserDto deleteUser(UserDto userDto);

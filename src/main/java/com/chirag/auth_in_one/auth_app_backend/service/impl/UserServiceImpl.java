@@ -3,6 +3,7 @@ package com.chirag.auth_in_one.auth_app_backend.service.impl;
 import com.chirag.auth_in_one.auth_app_backend.dto.UserDto;
 import com.chirag.auth_in_one.auth_app_backend.entity.User;
 import com.chirag.auth_in_one.auth_app_backend.enums.Provider;
+import com.chirag.auth_in_one.auth_app_backend.exceptions.ResourceNotFoundException;
 import com.chirag.auth_in_one.auth_app_backend.repository.UserRepository;
 import com.chirag.auth_in_one.auth_app_backend.service.IUser;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,15 @@ public class UserServiceImpl implements IUser {
 
         User savedUser = userRepository.save(user);
         return modelMapper.map(savedUser, UserDto.class);
+    }
+
+    @Override
+    public UserDto getUserByEmail(String email) {
+        User user = userRepository
+                .findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User not found with email"));
+
+        return modelMapper.map(user, UserDto.class);
     }
 
     @Override
