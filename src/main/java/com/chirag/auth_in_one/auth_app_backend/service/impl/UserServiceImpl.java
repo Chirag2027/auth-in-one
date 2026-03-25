@@ -11,6 +11,7 @@ import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 
+import java.time.Instant;
 import java.util.UUID;
 
 @Service
@@ -61,6 +62,7 @@ public class UserServiceImpl implements IUser {
         if (userDto.getPassword() != null) existingUser.setPassword(userDto.getPassword());  // updation logic for pw will be updated
         existingUser.setEnabled(userDto.getEnabled());
         existingUser.setEmail(userDto.getEmail());
+        existingUser.setUpdatedAt(Instant.now());
         User updatedUser = userRepository.save(existingUser);
         return modelMapper.map(updatedUser, UserDto.class);
     }
