@@ -8,9 +8,11 @@ public interface IUser {
 
     UserDto getUserByEmail(String email);
 
-    UserDto updateUser(UserDto userDto);
+    UserDto updateUser(UserDto userDto, String userId);
 
-    UserDto deleteUser(UserDto userDto);
+    void deleteUser(String userID);
+
+    UserDto getUserById(String userId);
 
     Iterable<UserDto> getAllUsers();
 
