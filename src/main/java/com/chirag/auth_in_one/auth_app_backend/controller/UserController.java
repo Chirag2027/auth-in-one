@@ -38,17 +38,17 @@ public class UserController {
         return ResponseEntity.ok(userService.getUserByEmail(email));
     }
 
-    @DeleteMapping("/{userId")
+    @DeleteMapping("/{userId}")
     public void  deleteUser(@PathVariable("userId") String userId) {
         userService.deleteUser(userId);
     }
 
-    @PutMapping("/{userId")
+    @PutMapping("/{userId}")
     public ResponseEntity<UserDto> updateUser(@PathVariable("userId") String userId, @RequestBody UserDto userDto) {
         return ResponseEntity.ok(userService.updateUser(userDto, userId));
     }
 
-    @GetMapping("/{userId")
+    @GetMapping("/{userId}")
     public ResponseEntity<UserDto> getUserById(@PathVariable("userId") String userId) {
         return ResponseEntity.ok(userService.getUserById(userId));
     }
