@@ -82,11 +82,7 @@ public class JwtServiceImpl {
 
     // parse the token
     public Jws<Claims> parse(String token) {
-        try{
-            return Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
-        } catch (JwtException e) {
-            throw new JwtException("Invalid JWT token", e);
-        }
+        return Jwts.parser().verifyWith(key).build().parseSignedClaims(token);
     }
 
     // is access token
@@ -104,6 +100,10 @@ public class JwtServiceImpl {
     public UUID getUserIdFromToken(String token) {
         Claims claims = parse(token).getPayload();
         return UUID.fromString(claims.getSubject());
+    }
+
+    public String getJti(String token) {
+        return parse(token).getPayload().getId();
     }
 
 }
