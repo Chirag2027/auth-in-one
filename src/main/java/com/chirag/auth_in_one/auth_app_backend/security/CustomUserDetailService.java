@@ -4,6 +4,7 @@ import com.chirag.auth_in_one.auth_app_backend.entity.User;
 import com.chirag.auth_in_one.auth_app_backend.exceptions.ResourceNotFoundException;
 import com.chirag.auth_in_one.auth_app_backend.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.stereotype.Service;
@@ -18,7 +19,7 @@ public class CustomUserDetailService implements UserDetailsService {
     public UserDetails loadUserByUsername(String username) throws ResourceNotFoundException {
 
         // for our use case username is email
-        return userRepository.findByEmail(username).orElseThrow(() -> new ResourceNotFoundException("User not found with the given emailId"));
+        return userRepository.findByEmail(username).orElseThrow(() -> new BadCredentialsException("User not found with the given emailId"));
     }
 
 }

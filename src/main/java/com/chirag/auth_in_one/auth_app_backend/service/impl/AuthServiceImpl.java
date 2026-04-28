@@ -31,9 +31,7 @@ public class AuthServiceImpl implements IAuthService {
     @Override
     public Authentication authenticate(LoginRequest loginRequest) {
         try {
-
             return authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(loginRequest.email(), loginRequest.password()));
-
         } catch (Exception e) {
             throw new BadCredentialsException("Invalid Credentials");
         }
