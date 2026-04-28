@@ -37,13 +37,14 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain) throws ServletException, IOException {
 
         String header = request.getHeader("Authorization");
-        if (header != null || header.startsWith("Bearer ")) {
-
+        if (header == null || !header.startsWith("Bearer ")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
             // extract token from header & validate it , then authentication create krunga and then security context ke andar set krunga
             String token = header.substring(7);
 
             try {
-
                 // check for access token
                 if(!jwtService.isAccessToken(token)){
                     filterChain.doFilter(request, response);
@@ -89,8 +90,6 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                 e.printStackTrace();
             }
 
-
-        }
 
         // if header is null or any other case then forward the request
         filterChain.doFilter(request, response);

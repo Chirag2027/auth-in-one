@@ -4,11 +4,11 @@ import com.chirag.auth_in_one.auth_app_backend.entity.Role;
 import com.chirag.auth_in_one.auth_app_backend.entity.User;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jws;
-import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import io.jsonwebtoken.security.SecureDigestAlgorithm;
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +21,8 @@ import java.util.Map;
 import java.util.UUID;
 
 @Service
+@Getter
+@Setter
 public class JwtServiceImpl {
     // operations related to jwt will be written here
 
