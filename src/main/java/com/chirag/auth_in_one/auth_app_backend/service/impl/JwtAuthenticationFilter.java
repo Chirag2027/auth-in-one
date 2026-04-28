@@ -42,13 +42,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             // extract token from header & validate it , then authentication create krunga and then security context ke andar set krunga
             String token = header.substring(7);
 
-            // check for access token
-            if(!jwtService.isAccessToken(token)){
-                filterChain.doFilter(request, response);
-                return;
-            }
-
             try {
+
+                // check for access token
+                if(!jwtService.isAccessToken(token)){
+                    filterChain.doFilter(request, response);
+                    return;
+                }
 
                 Jws<Claims> parse= jwtService.parse(token);
                 Claims payLoad = parse.getPayload();
