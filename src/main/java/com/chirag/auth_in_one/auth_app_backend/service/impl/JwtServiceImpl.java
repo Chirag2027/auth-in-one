@@ -106,4 +106,9 @@ public class JwtServiceImpl {
         return parse(token).getPayload().getId();
     }
 
+    public List<String> getRoles(String token) {
+        Claims claims = parse(token).getPayload();
+        return (List<String>) claims.get("roles");
+    }
+
 }

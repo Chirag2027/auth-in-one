@@ -41,29 +41,42 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
             // extract token from header & validate it , then authentication create krunga and then security context ke andar set krunga
             String token = header.substring(7);
+
+            // check for access token
+            if(!jwtService.isAccessToken(token)){
+                filterChain.doFilter(request, response);
+                return;
+            }
+
             try {
 
                 Jws<Claims> parse= jwtService.parse(token);
                 Claims payLoad = parse.getPayload();
                 String userId = payLoad.getSubject();
-                UUID uuid = UserHelper.parseUUID(userId);
+                UUID userUuid = UserHelper.parseUUID(userId);
 
-                userRepository.findById(uuid)
+                userRepository.findById(userUuid)
                         .ifPresent(user -> {
-                            // user DB se mil gya
-                            List<GrantedAuthority> authorities = user.getRoles() == null ? List.of() :
-                                    user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
 
-                            UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
-                                    user.getEmail(),
-                                    null,
-                                    authorities
-                            );
+                            // check if user is enabled or not
+                            if(user.isEnabled()) {
+                                // user DB se mil gya
+                                List<GrantedAuthority> authorities = user.getRoles() == null ? List.of() :
+                                        user.getRoles().stream().map(role -> new SimpleGrantedAuthority(role.getName())).collect(Collectors.toList());
 
-                            authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-                            // setting security context
-                            SecurityContextHolder.getContext().setAuthentication(authentication);
+                                UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
+                                        user.getEmail(),
+                                        null,
+                                        authorities
+                                );
 
+                                authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+
+                                // setting security context
+                                if (SecurityContextHolder.getContext().getAuthentication() == null) {
+                                    SecurityContextHolder.getContext().setAuthentication(authentication);
+                                }
+                            }
                         });
 
             } catch (ExpiredJwtException e) {
