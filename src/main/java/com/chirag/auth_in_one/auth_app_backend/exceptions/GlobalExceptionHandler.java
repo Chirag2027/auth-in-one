@@ -1,12 +1,23 @@
 package com.chirag.auth_in_one.auth_app_backend.exceptions;
 
+import com.chirag.auth_in_one.auth_app_backend.dto.ApiError;
 import com.chirag.auth_in_one.auth_app_backend.dto.ErrorResponse;
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import javax.security.auth.login.CredentialException;
+
 // below annotation is used for exception handling globally
+// all these exceptions tbhi chalti hai jb servlet se aati hai exception
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
@@ -23,6 +34,17 @@ public class GlobalExceptionHandler {
         // creating error response
         ErrorResponse errorResponse = new ErrorResponse(ex.getMessage(), HttpStatus.BAD_REQUEST);
         return new ResponseEntity<>(errorResponse, HttpStatus.BAD_REQUEST);
+    }
+
+    @ExceptionHandler({
+            UsernameNotFoundException.class,
+            BadCredentialsException.class,
+            CredentialException.class,
+            DisabledException.class
+    })
+    public ResponseEntity<ApiError> handleAuthException(Exception e, HttpServletRequest request) {
+        var apiError = ApiError.of(HttpStatus.BAD_REQUEST.value(), "Bad Request", e.getMessage(), request.getRequestURI());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(apiError);
     }
 
 }
