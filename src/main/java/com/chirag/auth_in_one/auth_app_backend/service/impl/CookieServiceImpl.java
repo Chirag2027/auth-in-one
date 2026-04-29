@@ -1,8 +1,8 @@
 package com.chirag.auth_in_one.auth_app_backend.service.impl;
 
-import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.Getter;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseCookie;
@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 @Service
 @Getter
+@Slf4j
 public class CookieServiceImpl {
 
     private final String refreshTokenCookieName;
@@ -34,6 +35,8 @@ public class CookieServiceImpl {
 
     // method to attach cookie to response
     public void attachRefreshCookie(HttpServletResponse response, String value, int maxAge) {
+        log.info("Attaching refresh cookie with name {} & value {}", refreshTokenCookieName, value);
+
         var responseCookieBuilder = ResponseCookie.from(refreshTokenCookieName, value)
                 .httpOnly(cookieHttpOnly)
                 .secure(cookieSecure)

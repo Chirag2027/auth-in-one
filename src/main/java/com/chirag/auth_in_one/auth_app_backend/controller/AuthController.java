@@ -8,7 +8,10 @@ import com.chirag.auth_in_one.auth_app_backend.entity.User;
 import com.chirag.auth_in_one.auth_app_backend.repository.RefreshTokenRepository;
 import com.chirag.auth_in_one.auth_app_backend.repository.UserRepository;
 import com.chirag.auth_in_one.auth_app_backend.service.IAuthService;
+import com.chirag.auth_in_one.auth_app_backend.service.impl.CookieServiceImpl;
 import com.chirag.auth_in_one.auth_app_backend.service.impl.JwtServiceImpl;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
@@ -35,9 +38,10 @@ public class AuthController {
     private final JwtServiceImpl jwtServiceImpl;
     private final ModelMapper modelMapper;
     private final RefreshTokenRepository refreshTokenRepository;
+    private final CookieServiceImpl cookieServiceImpl;
 
     @PostMapping("/login")
-    public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest loginRequest) {
+    public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest loginRequest, HttpServletResponse response) {
         // authenticate the user
         Authentication authenticate = authService.authenticate(loginRequest);
         User user = userRepository.findByEmail(loginRequest.email()).orElseThrow(() -> new BadCredentialsException("Invalid Credentials"));
@@ -63,6 +67,10 @@ public class AuthController {
         String accessToken = jwtServiceImpl.generateAccessToken(user);
         // refresh token generate
         String refreshToken = jwtServiceImpl.generateRefreshToken(user, refreshTokenObj.getJti());
+
+        // use cookie service - attach refresh token in cookie
+        cookieServiceImpl.attachRefreshCookie(response, refreshToken, (int) jwtServiceImpl.getRefreshTokenTtlSeconds());
+        cookieServiceImpl.addNoStoreHeaders(response);
 
         TokenResponse tokenResponse = TokenResponse.of(accessToken, refreshToken, jwtServiceImpl.getAccessTokenTtlSeconds(), modelMapper.map(user, UserDto.class));
         return ResponseEntity.ok(tokenResponse);
