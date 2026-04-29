@@ -3,7 +3,9 @@ package com.chirag.auth_in_one.auth_app_backend.controller;
 import com.chirag.auth_in_one.auth_app_backend.dto.LoginRequest;
 import com.chirag.auth_in_one.auth_app_backend.dto.TokenResponse;
 import com.chirag.auth_in_one.auth_app_backend.dto.UserDto;
+import com.chirag.auth_in_one.auth_app_backend.entity.RefreshToken;
 import com.chirag.auth_in_one.auth_app_backend.entity.User;
+import com.chirag.auth_in_one.auth_app_backend.repository.RefreshTokenRepository;
 import com.chirag.auth_in_one.auth_app_backend.repository.UserRepository;
 import com.chirag.auth_in_one.auth_app_backend.service.IAuthService;
 import com.chirag.auth_in_one.auth_app_backend.service.impl.JwtServiceImpl;
@@ -20,6 +22,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.time.Instant;
+import java.util.UUID;
+
 @RestController
 @RequestMapping("/api/v1/auth")
 @AllArgsConstructor
@@ -29,6 +34,7 @@ public class AuthController {
     private final UserRepository userRepository;
     private final JwtServiceImpl jwtServiceImpl;
     private final ModelMapper modelMapper;
+    private final RefreshTokenRepository refreshTokenRepository;
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(@RequestBody LoginRequest loginRequest) {
@@ -41,8 +47,24 @@ public class AuthController {
             throw new DisabledException("User is Disabled");
         }
 
+        String jti = UUID.randomUUID().toString();
+        var refreshTokenObj = RefreshToken.builder()
+                .jti(jti)
+                .user(user)
+                .createdAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(jwtServiceImpl.getRefreshTokenTtlSeconds()))
+                .revoked(Boolean.FALSE)
+                .build();
+
+        // save refresh token in DB
+        refreshTokenRepository.save(refreshTokenObj);
+
+        // access token generate
         String accessToken = jwtServiceImpl.generateAccessToken(user);
-        TokenResponse tokenResponse = TokenResponse.of(accessToken, "", jwtServiceImpl.getAccessTokenTtlSeconds(), modelMapper.map(user, UserDto.class));
+        // refresh token generate
+        String refreshToken = jwtServiceImpl.generateRefreshToken(user, refreshTokenObj.getJti());
+
+        TokenResponse tokenResponse = TokenResponse.of(accessToken, refreshToken, jwtServiceImpl.getAccessTokenTtlSeconds(), modelMapper.map(user, UserDto.class));
         return ResponseEntity.ok(tokenResponse);
     }
 
