@@ -22,6 +22,7 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -140,6 +141,27 @@ public class AuthController {
         cookieServiceImpl.addNoStoreHeaders(response);
 
         return ResponseEntity.ok(TokenResponse.of(newAccessToken, newRefreshToken, jwtServiceImpl.getAccessTokenTtlSeconds(), modelMapper.map(user, UserDto.class)));
+    }
+
+    @PostMapping("/logout")
+    public ResponseEntity<?> logout(HttpServletRequest request, HttpServletResponse response) {
+        authService.readRefreshTokenFromRequest(null, request).ifPresent(token -> {
+            try {
+                if (jwtServiceImpl.isRefreshToken(token)) {
+                    String jti =  jwtServiceImpl.getJti(token);
+                    refreshTokenRepository.findByJti(jti).ifPresent(rt -> {
+                        rt.setRevoked(Boolean.TRUE);
+                        refreshTokenRepository.save(rt);
+                    });
+                }
+            } catch (Exception _) {}
+        });
+
+        // clear cookie as well along with revoking the token
+        cookieServiceImpl.clearRefreshCookie(response);
+        cookieServiceImpl.addNoStoreHeaders(response);
+        SecurityContextHolder.clearContext();
+        return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
     }
 
 }
