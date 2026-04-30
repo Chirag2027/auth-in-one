@@ -140,7 +140,6 @@ public class AuthController {
         cookieServiceImpl.addNoStoreHeaders(response);
 
         return ResponseEntity.ok(TokenResponse.of(newAccessToken, newRefreshToken, jwtServiceImpl.getAccessTokenTtlSeconds(), modelMapper.map(user, UserDto.class)));
-
     }
 
 }
