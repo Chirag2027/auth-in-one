@@ -1,6 +1,7 @@
 package com.chirag.auth_in_one.auth_app_backend.controller;
 
 import com.chirag.auth_in_one.auth_app_backend.dto.LoginRequest;
+import com.chirag.auth_in_one.auth_app_backend.dto.RefreshTokenRequest;
 import com.chirag.auth_in_one.auth_app_backend.dto.TokenResponse;
 import com.chirag.auth_in_one.auth_app_backend.dto.UserDto;
 import com.chirag.auth_in_one.auth_app_backend.entity.RefreshToken;
@@ -11,6 +12,7 @@ import com.chirag.auth_in_one.auth_app_backend.service.IAuthService;
 import com.chirag.auth_in_one.auth_app_backend.service.impl.CookieServiceImpl;
 import com.chirag.auth_in_one.auth_app_backend.service.impl.JwtServiceImpl;
 import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -26,6 +28,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
+import java.util.Optional;
 import java.util.UUID;
 
 @RestController
@@ -79,6 +82,65 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<UserDto> registerUser(@RequestBody UserDto userDto) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.registerUser(userDto));
+    }
+
+    // refresh and access token renew api
+    // we will read token from cookie
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refreshToken(
+           @RequestBody(required = false) RefreshTokenRequest body,
+           HttpServletResponse response,
+           HttpServletRequest request
+    ) {
+
+        String refreshToken = authService.readRefreshTokenFromRequest(body, request).orElseThrow(() -> new BadCredentialsException("Missing Refresh Token"));
+
+        if (!jwtServiceImpl.isRefreshToken(refreshToken)) {
+            throw new BadCredentialsException("Invalid Refresh Token Type");
+        }
+
+        String jti = jwtServiceImpl.getJti(refreshToken);
+        UUID userId = jwtServiceImpl.getUserIdFromToken(refreshToken);
+
+        RefreshToken storedRefreshToken = refreshTokenRepository.findByJti(jti).orElseThrow(() -> new BadCredentialsException("Refresh Token Not Recognized"));
+
+        if (storedRefreshToken.isRevoked()) {
+            throw new BadCredentialsException("Refresh Token is Revoked");
+        }
+
+        if (storedRefreshToken.getExpiresAt().isBefore(Instant.now())) {
+            throw new BadCredentialsException("Refresh Token is Expired");
+        }
+
+        if (!storedRefreshToken.getUser().getId().equals(userId)) {
+            throw new BadCredentialsException("Refresh Token does not match User");
+        }
+
+        // refresh token rotate
+        storedRefreshToken.setRevoked(Boolean.TRUE);
+        String newJti =  UUID.randomUUID().toString();
+        storedRefreshToken.setReplacedByToken(newJti);
+        refreshTokenRepository.save(storedRefreshToken);
+
+        // new refresh token corresponding to this jti
+        User user = storedRefreshToken.getUser();
+        var newRefreshTokenObj = RefreshToken.builder()
+                .jti(newJti)
+                .user(user)
+                .createdAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(jwtServiceImpl.getRefreshTokenTtlSeconds()))
+                .revoked(Boolean.FALSE)
+                .build();
+
+        refreshTokenRepository.save(newRefreshTokenObj);
+        String newAccessToken = jwtServiceImpl.generateAccessToken(user);
+        String newRefreshToken = jwtServiceImpl.generateRefreshToken(user, newRefreshTokenObj.getJti());
+
+        cookieServiceImpl.attachRefreshCookie(response, newRefreshToken, (int) jwtServiceImpl.getRefreshTokenTtlSeconds());
+        cookieServiceImpl.addNoStoreHeaders(response);
+
+        return ResponseEntity.ok(TokenResponse.of(newAccessToken, newRefreshToken, jwtServiceImpl.getAccessTokenTtlSeconds(), modelMapper.map(user, UserDto.class)));
+
     }
 
 }
