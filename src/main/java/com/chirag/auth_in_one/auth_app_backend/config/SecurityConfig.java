@@ -16,6 +16,7 @@ import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import tools.jackson.databind.ObjectMapper;
 
@@ -24,6 +25,9 @@ public class SecurityConfig {
 
     @Autowired
     private JwtAuthenticationFilter jwtAuthenticationFilter;
+
+    @Autowired
+    private AuthenticationSuccessHandler authenticationSuccessHandler;
 
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) {
@@ -44,7 +48,7 @@ public class SecurityConfig {
 
                 // oauth2 configuration
                 .oauth2Login(oAuth2LoginConfigurer ->
-                            oAuth2LoginConfigurer.successHandler(null)    // if succes hoti hai then ye chlega, else failure wala
+                            oAuth2LoginConfigurer.successHandler(authenticationSuccessHandler)    // if success hoti hai then ye chlega, else failure wala
                                     .failureHandler(null)
                         )
                 .logout(AbstractHttpConfigurer::disable)
