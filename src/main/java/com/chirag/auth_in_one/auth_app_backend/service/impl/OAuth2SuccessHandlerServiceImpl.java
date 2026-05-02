@@ -67,6 +67,7 @@ public class OAuth2SuccessHandlerServiceImpl implements AuthenticationSuccessHan
                         .email(email)
                         .name(name)
                         .image(picture)
+                        .enabled(Boolean.TRUE)
                         .provider(Provider.GOOGLE)
                         .build();
 
