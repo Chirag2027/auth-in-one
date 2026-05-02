@@ -1,7 +1,9 @@
 package com.chirag.auth_in_one.auth_app_backend.service.impl;
 
+import com.chirag.auth_in_one.auth_app_backend.entity.RefreshToken;
 import com.chirag.auth_in_one.auth_app_backend.entity.User;
 import com.chirag.auth_in_one.auth_app_backend.enums.Provider;
+import com.chirag.auth_in_one.auth_app_backend.repository.RefreshTokenRepository;
 import com.chirag.auth_in_one.auth_app_backend.repository.UserRepository;
 import com.chirag.auth_in_one.auth_app_backend.utils.Constants;
 import jakarta.servlet.ServletException;
@@ -16,6 +18,8 @@ import org.springframework.security.web.authentication.AuthenticationSuccessHand
 import org.springframework.stereotype.Component;
 
 import java.io.IOException;
+import java.time.Instant;
+import java.util.UUID;
 
 @Component
 @Slf4j
@@ -23,6 +27,15 @@ public class OAuth2SuccessHandlerServiceImpl implements AuthenticationSuccessHan
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private JwtServiceImpl jwtServiceImpl;
+
+    @Autowired
+    private RefreshTokenRepository refreshTokenRepository;
+
+    @Autowired
+    private CookieServiceImpl cookieServiceImpl;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -71,9 +84,25 @@ public class OAuth2SuccessHandlerServiceImpl implements AuthenticationSuccessHan
 
         }
 
+        // refresh token generate to get new access token
+        String jti = UUID.randomUUID().toString();
+        RefreshToken refreshTokenOb = RefreshToken.builder()
+                .jti(jti)
+                .user(user)
+                .revoked(Boolean.FALSE)
+                .createdAt(Instant.now())
+                .expiresAt(Instant.now().plusSeconds(jwtServiceImpl.getRefreshTokenTtlSeconds()))
+                .build();
+
+        refreshTokenRepository.save(refreshTokenOb);
+
+        String accessToken = jwtServiceImpl.generateAccessToken(user);
+        String refreshToken = jwtServiceImpl.generateRefreshToken(user, refreshTokenOb.getJti());
+
+        cookieServiceImpl.attachRefreshCookie(response, refreshToken, (int) jwtServiceImpl.getRefreshTokenTtlSeconds());
 
 
-        response.getWriter().write("Login successful");
+        response.getWriter().write("Login successful");    // here will add frontend url where we have to redirect
 
     }
 
