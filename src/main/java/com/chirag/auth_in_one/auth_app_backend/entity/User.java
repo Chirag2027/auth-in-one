@@ -70,6 +70,8 @@ public class User implements UserDetails {
     @Enumerated(EnumType.STRING)
     private Provider provider = Provider.LOCAL;
 
+    private String providerId;
+
     @ManyToMany(fetch = FetchType.EAGER)
     @JoinTable(name = "user_role_mapping", joinColumns = @JoinColumn(name = "userId"), inverseJoinColumns = @JoinColumn(name = "roleId"))
     private Set<Role> roles = new HashSet<>();

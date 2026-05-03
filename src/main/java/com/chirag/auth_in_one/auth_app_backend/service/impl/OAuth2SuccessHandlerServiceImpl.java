@@ -63,20 +63,37 @@ public class OAuth2SuccessHandlerServiceImpl implements AuthenticationSuccessHan
                 String email = oAuth2User.getAttributes().getOrDefault("email", "").toString();
                 String name = oAuth2User.getAttributes().getOrDefault("name", "").toString();
                 String picture = oAuth2User.getAttributes().getOrDefault("picture", "").toString();
-                user = User.builder()
+                User newUser = User.builder()
                         .email(email)
                         .name(name)
                         .image(picture)
                         .enabled(Boolean.TRUE)
                         .provider(Provider.GOOGLE)
+                        .providerId(googleId)
                         .build();
 
-                userRepository.findByEmail(email).ifPresentOrElse(u -> {
-                    log.info("User with email {} already exists", email);
-                }, () -> {
-                    log.info("User with email {} does not exist, hence saving in DB", email);
-                    userRepository.save(user);
-                });
+                user = userRepository.findByEmail(email).orElseGet(() -> userRepository.save(newUser));
+
+            }
+
+            case Constants.GITHUB -> {
+                String name = oAuth2User.getAttributes().get("login") != null ? oAuth2User.getAttributes().get("login").toString() : "";
+                String email = oAuth2User.getAttributes().get("email") != null ? oAuth2User.getAttributes().get("email").toString() : "";
+                String githubId = oAuth2User.getAttributes().get("id") != null ? oAuth2User.getAttributes().get("id").toString() : "";
+                String picture = oAuth2User.getAttributes().get("avatar_url") != null ? oAuth2User.getAttributes().get("avatar_url").toString() : "";
+
+                User newUser = User.builder()
+                        .email(email)
+                        .name(name)
+                        .image(picture)
+                        .enabled(Boolean.TRUE)
+                        .provider(Provider.GITHUB)
+                        .providerId(githubId)
+                        .build();
+
+                user = userRepository.findByEmail(email).orElseGet(() -> userRepository.save(newUser));
+
+
             }
 
             default -> {
