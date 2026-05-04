@@ -11,6 +11,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.core.user.OAuth2User;
@@ -36,6 +37,12 @@ public class OAuth2SuccessHandlerServiceImpl implements AuthenticationSuccessHan
 
     @Autowired
     private CookieServiceImpl cookieServiceImpl;
+
+    @Value("${app.auth.frontend.success-redirect}")
+    private String frontendSuccessRedirect;
+
+    @Value("${app.auth.frontend.failure-redirect}")
+    private String frontendFailureRedirect;
 
     @Override
     public void onAuthenticationSuccess(HttpServletRequest request, HttpServletResponse response, Authentication authentication) throws IOException, ServletException {
@@ -124,7 +131,9 @@ public class OAuth2SuccessHandlerServiceImpl implements AuthenticationSuccessHan
         cookieServiceImpl.attachRefreshCookie(response, refreshToken, (int) jwtServiceImpl.getRefreshTokenTtlSeconds());
 
 
-        response.getWriter().write("Login successful");    // here will add frontend url where we have to redirect
+//        response.getWriter().write("Login successful");    // here will add frontend url where we have to redirect
+
+        response.sendRedirect(frontendSuccessRedirect);
 
     }
 
