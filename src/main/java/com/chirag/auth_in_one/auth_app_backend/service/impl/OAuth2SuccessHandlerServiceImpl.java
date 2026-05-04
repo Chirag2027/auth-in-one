@@ -76,12 +76,16 @@ public class OAuth2SuccessHandlerServiceImpl implements AuthenticationSuccessHan
 
             }
 
+            // provider is github
             case Constants.GITHUB -> {
-                String name = oAuth2User.getAttributes().get("login") != null ? oAuth2User.getAttributes().get("login").toString() : "";
-                String email = oAuth2User.getAttributes().get("email") != null ? oAuth2User.getAttributes().get("email").toString() : "";
-                String githubId = oAuth2User.getAttributes().get("id") != null ? oAuth2User.getAttributes().get("id").toString() : "";
-                String picture = oAuth2User.getAttributes().get("avatar_url") != null ? oAuth2User.getAttributes().get("avatar_url").toString() : "";
+                String name = oAuth2User.getAttributes().getOrDefault("login", "").toString();
+                String githubId = oAuth2User.getAttributes().getOrDefault("id", "").toString();
+                String picture = oAuth2User.getAttributes().getOrDefault("avatar_url", "").toString();
 
+                String email = (String) oAuth2User.getAttributes().get("email");
+                if (email == null) {
+                    email = name + "@gmail.com";
+                }
                 User newUser = User.builder()
                         .email(email)
                         .name(name)
