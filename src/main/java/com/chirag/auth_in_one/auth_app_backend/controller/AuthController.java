@@ -11,14 +11,12 @@ import com.chirag.auth_in_one.auth_app_backend.repository.UserRepository;
 import com.chirag.auth_in_one.auth_app_backend.service.IAuthService;
 import com.chirag.auth_in_one.auth_app_backend.service.impl.CookieServiceImpl;
 import com.chirag.auth_in_one.auth_app_backend.service.impl.JwtServiceImpl;
-import jakarta.servlet.ServletResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.security.authentication.DisabledException;
 import org.springframework.security.core.Authentication;
@@ -29,7 +27,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.time.Instant;
-import java.util.Optional;
 import java.util.UUID;
 
 @RestController
